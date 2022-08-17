@@ -1,0 +1,320 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class webstories_master extends CI_Controller{
+
+	public function __construct(){
+		parent::__construct();
+		$this->load->database();
+	}
+	
+	public function index(){
+		$data['Menu_id'] = get_menu_details_by_menu_name("Web Stories");
+		if(defined("USERACCESS_VIEW".$data['Menu_id']) && constant("USERACCESS_VIEW". $data['Menu_id']) == 1){
+			$search = "";
+			$suffix = "";
+			if($this->input->get('type')!=''){
+				$type = trim($this->input->get('type'));
+				$search .=" AND w.status='".$type."'";
+				$suffix .="&type=".$type;
+			}
+			if($this->input->get('query')!=''){
+				$search .=" AND w.title LIKE '%".$this->input->get('query')."%'";
+				$suffix .="&query=".$this->input->get('query');
+			}
+			$row = ($this->input->get('per_page')!='') ? $this->input->get('per_page') : 0;
+			$totalRows = $this->db->query("SELECT w.wsid FROM webstories_master AS w INNER JOIN usermaster AS u ON w.modified_by = u.User_id LEFT JOIN sectionmaster AS s ON w.section_id=s.Section_id WHERE w.wsid!=''".$search."")->num_rows();
+			$this->load->library("pagination");
+			$config["base_url"] = base_url(folder_name)."/webstories_master";
+			$config["total_rows"] = $totalRows;
+			$config["per_page"] = 15;
+			$config['num_links'] = 5;
+			$config['page_query_string'] = TRUE;
+			$config['suffix'] = $suffix;
+			$this->pagination->initialize($config);
+			$data["links"] = $this->pagination->create_links();
+			$data["data"] = $this->db->query("SELECT w.wsid , w.title , w.author , w.status , w.section_id, w.poster_image, s.Sectionname , u.Username , DATE_FORMAT(w.modified_on , '%D %M %Y %h:%i%s %r') AS modified_on FROM webstories_master AS w INNER JOIN usermaster AS u ON w.modified_by = u.User_id LEFT JOIN sectionmaster AS s ON w.section_id=s.Section_id WHERE w.wsid!=''".$search." ORDER BY w.created_on DESC LIMIT ".$row." , ".$config["per_page"]."")->result();
+			$data['title'] = "Web Stories Master";
+			$data['template'] = 'webstories_master';
+			$this->load->view('admin_template',$data);
+		}else{
+			redirect(folder_name.'/common/access_permission/webstories');
+		}
+	}
+	
+	public function add(){
+		$data['Menu_id'] = get_menu_details_by_menu_name("Web Stories");
+		if(defined("USERACCESS_ADD".$data['Menu_id']) && constant("USERACCESS_ADD". $data['Menu_id']) == 1){
+			$record['title'] = 'Untitled';
+			$record['status'] = 2;
+			$record['created_by'] = $record['modified_by'] = USERID;
+			$record['modified_on'] = date('Y-m-d H:i:s');
+			$this->db->insert('webstories_master' , $record);
+			$data['creatorId'] = $this->db->insert_id();
+			$data['title'] = "Add Web Stories Master";
+			$data['template'] = 'addwebstories_master';
+			$data['type'] = 'add';
+			$this->load->view('admin_template',$data);
+		}else{
+			redirect(folder_name.'/common/access_permission/webstories');
+		}
+	}
+	
+	public function edit($wsid=''){
+		$data['Menu_id'] = get_menu_details_by_menu_name("Web Stories");
+		if(defined("USERACCESS_EDIT".$data['Menu_id']) && constant("USERACCESS_EDIT". $data['Menu_id']) == 1){
+			$data['title'] = "Edit Web Stories Master";
+			$data['creatorId'] = $wsid;
+			$data['template'] = 'addwebstories_master';
+			$data['type'] = 'edit';
+			$data['story'] = $this->db->select('*')->from('webstories_master')->where('wsid' , $wsid)->get()->row_array();
+			$data['stories'] = $this->db->select('*')->from('webstories_attributes')->where('wsid' , $wsid)->get()->result_array();
+			$this->load->view('admin_template',$data);
+		}else{
+			redirect(folder_name.'/common/access_permission/webstories');
+		}
+	}
+	
+	public function remove($id=''){
+		if(!isset($id) || $id=='' || !is_numeric($id)){
+			redirect(folder_name.'/webstories_master' , 301);
+		}
+		$this->db->where('wsid' , $id);
+		$this->db->delete('webstories_master');
+		redirect(folder_name.'/webstories_master' , 301);
+	}
+	
+	public function templates(){
+		$id = trim($this->input->post('id'));
+		$response = [];
+		$response['id'] = $id;
+		if($id!=''){
+			$response['data'] = $this->db->select('wtid , name , image')->from('webstories_templates')->where(['status' => 1 , 'wtid' => $id])->get()->row_array();
+		}else{
+			$response['data'] = $this->db->select('wtid , name , image')->from('webstories_templates')->where('status' , 1)->get()->result_array();
+		}
+		echo json_encode($response);
+		
+	}
+	
+	public function preview($id=''){
+		if(!isset($id) || $id=='' || !is_numeric($id)){
+			redirect(folder_name.'/webstories_master' , 301);
+		}
+		
+		$data['Menu_id'] = get_menu_details_by_menu_name("Web Stories");
+		if(defined("USERACCESS_VIEW".$data['Menu_id']) && constant("USERACCESS_VIEW". $data['Menu_id']) == 1){
+			
+			$data['slides'] = $this->db->select('*')->from('webstories_templates')->where(['status' => 1 , 'wtid' => $id])->get()->row_array();
+			if(isset($data['slides']) && count($data['slides']) > 0){
+				$data['title'] = "Web Stories Preview";
+				$this->load->view('admin/webstories_preview',$data);
+			}else{
+				redirect(folder_name.'/webstories_master' , 301);
+			}
+			
+		}else{
+			redirect(folder_name.'/common/access_permission/webstories');
+		}
+	}
+	
+	public function slide_preview($id=''){
+		if(!isset($id) || $id=='' || !is_numeric($id)){
+			redirect(folder_name.'/webstories_master' , 301);
+		}
+		
+		$data['Menu_id'] = get_menu_details_by_menu_name("Web Stories");
+		if(defined("USERACCESS_VIEW".$data['Menu_id']) && constant("USERACCESS_VIEW". $data['Menu_id']) == 1){
+			
+			$data['slides'] = $this->db->select('*')->from('webstories_attributes')->where(['waid' => $id])->get()->row_array();
+			if(isset($data['slides']) && count($data['slides']) > 0){
+				$data['title'] = "Web Stories Preview";
+				$this->load->view('admin/webstories_preview',$data);
+			}else{
+				redirect(folder_name.'/webstories_master' , 301);
+			}
+			
+		}else{
+			redirect(folder_name.'/common/access_permission/webstories');
+		}
+	}
+	
+	public function set_slide(){
+		$id = $this->input->post('id');
+		$wsid = $this->input->post('wsid');
+		$response['id'] = $id;
+		$response['template'] = '';
+		$slide = $this->db->select('*')->from('webstories_templates')->where(['status' => 1 , 'wtid' => $id])->get()->row_array();
+		if(is_array($slide) && count($slide) > 0){
+			$data =['wtid' => $slide['wtid'] , 'wsid' => $wsid , 'name' => $slide['name'] , 'content' => $slide['content'] , 'fields' => $slide['fields'] , 'css' => $slide['css'] , 'fonts' => $slide['fonts'] , 'status' => 0 , 'created_by' => USERID , 'modified_by' => USERID , 'modified_on' => date('Y-m-d H:i:s')];
+			$this->db->insert('webstories_attributes' , $data);
+			$waid = $this->db->insert_id();
+			$fields = json_decode($slide['fields'] , true);
+			$fields = $fields['fields'];
+			$imagePath = image_url.'images/webstories/slides/'.$slide['image'];
+			$response['template'] .= '<div data-waid="'.$waid.'" data-wtid="'.$id.'" class="slide-item slide-'.$id.'">';
+			$response['template'] .= '<textarea style="display:none;" id="slide_field_'.$waid.'">'.$slide['fields'].'</textarea>';
+			//$response['template'] .= '<img src="'.$imagePath.'" class="img-responsive">';
+			$response['template'] .= '<iframe style="border:none;" src="'.base_url(folder_name).'/webstories_master/preview/'.$id.'"></iframe>'; 
+			
+			$response['template'] .= '<div class="slide-item-content">';
+			$response['template'] .= '<h4 class="text-center">'.$slide['name'].'</h4>';
+			for($i=0;$i<count($fields);$i++){
+				$response['template'] .= '<div class="form-group inputs">';
+				switch($fields[$i]['type']){
+					case 'text' :
+					$response['template'] .= '<label style="width:100%;">'.$fields[$i]['name'].' <sup>*</sup></label>';
+					if($fields[$i]['name']!='Anchor Link'){
+						$response['template'] .= '<input style="width:70%;float:left;" data-element="'.$fields[$i]['element'].'" type="text" class="form-control" value="'.$fields[$i]['value'].'">';
+						$response['template'] .= '<input style="width:15%;float:left;" type="color" class="form-control" value="">';
+						$response['template'] .= '<select id="'.str_replace('%','',$fields[$i]['element']).$waid.'-fontsize" style="width:15%;float:left;" class="form-control">';
+						$response['template'] .= '<option value="">Please Select</option>';
+						for($n=1;$n<=100;$n++){
+						$response['template'] .= '<option value="'.$n.'">'.$n.'px</option>';	
+						}
+						$response['template'] .= '</select>';
+					}else{
+						$response['template'] .= '<input data-element="'.$fields[$i]['element'].'" type="text" class="form-control" value="'.$fields[$i]['value'].'">';	
+					}
+					break;
+					case ($fields[$i]['type'] == 'image' || $fields[$i]['type'] == 'video') :
+					$innerImagePath = image_url.'images/webstories/default/'.$fields[$i]['value'];
+					$response['template'] .= '<label>'.$fields[$i]['name'].' <sup>*</sup></label>';
+					$response['template'] .= '<input id="'.str_replace('%','',$fields[$i]['element']).$waid.'" data-element="'.$fields[$i]['element'].'" type="file" class="form-control">';
+					$response['template'] .= '<a target="_BLANK" href="'.$innerImagePath.'">'.$fields[$i]['value'].'</a>';
+					break;
+					
+				}
+				$response['template'] .= '</div>';
+			}
+			$response['template'] .= '<div class="form-group slide-satus">';
+			$response['template'] .= '<p style="color:#f50909;">Current Status : Draft</p>';
+			$response['template'] .= '</div>';
+			$response['template'] .= '<div class="form-group text-center">';
+			$response['template'] .= '<button title="Preview" class="btn btn-primary slide-preview"><i class="fa fa-eye"></i></button>';
+			$response['template'] .= '<button data-type="1" title="Save & Draft" class="btn btn-primary slide-save"><i class="fa fa-archive"></i></button>';
+			$response['template'] .= '<button data-type="2" title="Save & Publish" class="btn btn-primary slide-save"><i class="fa fa-save"></i></button>';
+			$response['template'] .= '<button title="Delete" class="btn btn-primary slide-delete"><i class="fa fa-trash"></i></button>';
+			$response['template'] .= '</div>';
+			$response['template'] .= '</div>';
+			$response['template'] .= '</div>';
+		}
+		
+		echo json_encode($response);
+	}
+	
+	public function delete_slide(){
+		$waid = $this->input->post('waid');
+		$this->db->where('waid' , $waid);
+		echo $this->db->delete('webstories_attributes');
+	}
+	
+	public function upload($id=0){
+		$this->load->library('upload');
+		if($id==1){
+			$config['upload_path'] = '/'.WEBSTORIES_PATH.'poster_image/';
+		}else{
+			$config['upload_path'] = '/'.WEBSTORIES_PATH.'files/';
+		}
+        $config['allowed_types'] = '*';
+		$this->upload->initialize($config);
+		if($this->upload->do_upload('img')){
+			$result = $this->upload->data();
+			echo $result['file_name'];
+		}else{
+			echo '';
+		}
+	}
+	
+	public function update_attribute(){
+		$response['template'] = '';
+		$response['result'] = 0;
+		$waid = $this->input->post('waid');
+		$type = $this->input->post('type');
+		$field['fields'] = $fields = $this->input->post('field');
+		$data['fields'] = json_encode($field);
+		$data['modified_by'] = USERID;
+		$data['modified_on'] = date('Y-m-d H:i:s');
+		$data['status'] = ($type==1) ? 0 : 1;
+		$this->db->where('waid' , $waid);
+		$response['result'] = $this->db->update('webstories_attributes' , $data);
+		for($i=0;$i<count($fields);$i++){
+			$response['template'] .= '<div class="form-group inputs">';
+			switch($fields[$i]['type']){
+				case 'text' :
+				$response['template'] .= '<label style="width:100%;">'.$fields[$i]['name'].' <sup>*</sup></label>';
+				if($fields[$i]['name']!='Anchor Link'){
+					$response['template'] .= '<input style="width:70%;float:left;" data-element="'.$fields[$i]['element'].'" type="text" class="form-control" value="'.$fields[$i]['value'].'">';
+					$response['template'] .= '<input style="width:15%;float:left;" type="color" class="form-control'.((isset($fields[$i]['color']) && $fields[$i]['name']!='')?' changed':'').'" value="'.((isset($fields[$i]['color']) && $fields[$i]['name']!='')?$fields[$i]['color']:'').'">';
+					$response['template'] .= '<select id="'.str_replace('%','',$fields[$i]['element']).$waid.'-fontsize" style="width:15%;float:left;" class="form-control">';
+					$response['template'] .= '<option value="">Please Select</option>';
+					for($n=1;$n<=100;$n++){
+					$response['template'] .= '<option '.((isset($fields[$i]['fontSize']) && $fields[$i]['fontSize']==$n)? ' selected ':'').' value="'.$n.'">'.$n.'px</option>';	
+					}
+					$response['template'] .= '</select>';
+				}else{
+					$response['template'] .= '<input data-element="'.$fields[$i]['element'].'" type="text" class="form-control" value="'.$fields[$i]['value'].'">';
+				}
+				break;
+				case ($fields[$i]['type'] == 'image' || $fields[$i]['type'] == 'video') :
+				$innerImagePath = image_url.'images/webstories/default/'.$fields[$i]['value'];
+				if(isset($fields[$i]['imageType']) && $fields[$i]['imageType']=='files'){
+					$innerImagePath = image_url.'images/webstories/files/'.$fields[$i]['value'];
+				}
+				$response['template'] .= '<label>'.$fields[$i]['name'].' <sup>*</sup></label>';
+				$response['template'] .= '<input id="'.str_replace('%','',$fields[$i]['element']).$waid.'" data-element="'.$fields[$i]['element'].'" type="file" class="form-control">';
+				$response['template'] .= '<a target="_BLANK" href="'.$innerImagePath.'">'.$fields[$i]['value'].'</a>';
+				break;
+				
+			}
+			$response['template'] .= '</div>';
+		}
+		echo json_encode($response);
+	}
+	
+	public function preview_story($id=''){
+		if(!isset($id) || $id=='' || !is_numeric($id)){
+			redirect(folder_name.'/webstories_master' , 301);
+		}
+		$data['Menu_id'] = get_menu_details_by_menu_name("Web Stories");
+		if(defined("USERACCESS_VIEW".$data['Menu_id']) && constant("USERACCESS_VIEW". $data['Menu_id']) == 1){
+			$data['story'] = $this->db->select('*')->from('webstories_master')->where(['wsid' => $id])->get()->row_array();
+			$data['slides'] = $this->db->select('*')->from('webstories_attributes')->where(['wsid' => $id])->get()->result();
+			$data['title'] = "Web Stories Preview";
+			$this->load->view('admin/webstory_preview',$data);
+		}else{
+			redirect(folder_name.'/common/access_permission/webstories');
+		}
+	}
+	
+	public function remove_image(){
+		$imgFile = $this->input->post('imgFile');
+		$filePath = '/'.WEBSTORIES_PATH.'poster_image/'.$imgFile;
+		echo unlink($filePath);
+		
+	}
+	
+	public function update_story(){
+		$data = [];
+		$data['title'] = trim($this->input->post('title'));
+		$data['summary'] = trim($this->input->post('summary'));
+		$data['section_id'] = trim($this->input->post('section'));
+		$data['poster_image'] = trim($this->input->post('poster_image'));
+		$data['author'] = trim($this->input->post('author'));
+		$data['status'] = trim($this->input->post('status'));
+		$data['no_index'] = trim($this->input->post('noindex'));
+		$data['no_follow'] = trim($this->input->post('nofollow'));
+		$data['meta_title'] = trim($this->input->post('meta_title'));
+		$data['meta_description'] = trim($this->input->post('meta_description'));
+		$data['tags'] = trim($this->input->post('tags'));
+		$data['modified_by'] = USERID;
+		$data['modified_on'] = date('Y-m-d H:i:s');
+		$wsid = trim($this->input->post('workspace_id'));
+		$url = str_replace(' ', '-', strtolower($data['title']));
+		$url = preg_replace('/[^A-Za-z0-9\-]/', '', $url);
+		$data['url'] = $url.'/'.$wsid.'/webstory.htm';
+		$this->db->where('wsid' , $wsid);
+		echo $this->db->update('webstories_master' , $data);
+	}
+}
+?>

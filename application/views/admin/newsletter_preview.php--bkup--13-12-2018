@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Droid+Serif" />
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <body style="margin:0 23%;font-family: 'Droid Serif' !important;">
+        <div style="background:#eee; float: left;width:100%;">
+            <div style=" float: left; width: 48%;">
+              <a href="http://www.newindianexpress.com/" target="_blank"> <img src="http://images.newindianexpress.com/images/static_img/print_nie_logo.png" style="float:left;width:100%;padding: 7% 15%;
+               width: 70%;"></a>
+            </div>
+            <div style=" float: left; width: 50%; font-size: 16px;margin-left:2%;">
+                <p>FROM LIFESTYLE TO BUSINESS, FROM LOCAL TO REGIONAL, FROM BREAKING NEWS TO DAILY DIGESTS, NEVER MISS
+                        A STORY. BROWSE OUR NEWSLETTERS</p>
+                <span style="background: #ffff66; padding: 4px;text-transform: uppercase;">sign up now</span>
+            </div>
+        </div>
+		
+		<?php if(isset($record[0])){ ?>
+        <div style="float: left;padding: 16px 7px 16px;">
+             <span style="background: #01ABEE; border-radius: 50%;width: 14px;height: 15px;float: left;margin-top: 3px;"></span>
+            <span style="text-transform: uppercase; padding-left: 6px;font-size: 18px;font-weight: bold;">
+			<?php echo $record[0]['section']; ?>
+			</span>
+            <a href="<?php echo BASEURL.$record[0]['url'] ?>" target="_blank" style="text-transform: uppercase; font-size: 40px;margin: 0 0 15px;font-weight:bold;    text-decoration: none;color: #000;display: block;"><?php echo $record[0]['title'] ?></a>
+            <span style="font-size: 18px;font-weight: bold;"><?php echo $record[0]['summary'] ?></span>
+        </div>
+		<?php } ?>
+		<div style="float:left; width:100%;margin-bottom: 15px;">
+            <div style="float: left;width:48%;">
+				<?php if(isset($record[1])){ ?>
+                <div style="background:#eee;padding: 11px 7px 16px;float:left;">
+                    <span style="background: #01ABEE; border-radius: 50%;width: 14px;height: 15px;float: left;margin-top: 3px;"></span>
+                    <span style="text-transform: uppercase; padding-left: 6px;font-size: 18px;font-weight: bold;">
+                    <?php echo $record[1]['section'];   ?>
+                    </span>
+					 <a href="<?php echo BASEURL.$record[1]['url'] ?>" target="_blank" style="font-size: 23px;margin: 10px 0 13px;text-decoration: none;color: #000;display: block;float:left;"><?php echo $record[1]['title'] ?></a>
+					<p style="font-size: 15px;float:left;margin:0;"><?php echo $record[1]['summary'] ?></p>
+                </div>
+				<?php } ?>
+				<?php if(isset($record[2])){ ?>
+                <div style="padding: 11px 7px 16px;float:left; background:#fff;">
+                    <div style="float:left;width:100%">
+                        <span style="background: #01ABEE; border-radius: 50%;width: 14px;height: 15px;float: left;margin-top: 3px;"></span>
+                        <span style="text-transform: uppercase; padding-left: 6px;font-size: 18px;font-weight: bold;">
+                         <?php echo $record[2]['section'];   ?>
+                        </span>
+                    </div>
+                    <div style="float:left;width: 70%;">
+                        <a href="<?php echo BASEURL.$record[2]['url'] ?>" target="_blank" style="font-size: 23px;margin: 10px 0 10px;color: #000;display: block;text-decoration: none;"><?php echo $record[2]['title'] ?></a>
+                        <p style="font-size: 15px;float:left;margin:0;"><?php echo $record[2]['summary'] ?></p>
+                    </div>
+					<?php
+					if($record[2]['image']!=''){
+						$Image150X150  = str_replace("original","w150X150", $record[2]['image']);
+						$Image150X150 = image_url. imagelibrary_image_path . $Image150X150;
+					}else{
+						$Image150X150 = image_url. imagelibrary_image_path . 'logo/nie_logo_150X150.jpg';
+					}				
+					?>
+                    <div style="float: left;  width: 29%; border-radius: 50%; height: 109px;background: url(<?php echo $Image150X150; ?>);background-position: center;  background-size: cover; background-repeat: no-repeat;margin-top: 3%;">
+                    </div>
+                </div>
+				<?php } ?>
+            </div>
+            <div style="float:left;width:50%;margin-left:2%;">
+				<?php if($record[3]['image']!=''){
+					if($record[3]['image']!=''){
+						$Image600X300  = str_replace("original","w600X300", $record[3]['image']);
+						$Image600X300 = image_url. imagelibrary_image_path . $Image600X300;
+					}else{
+						$Image600X300 = image_url. imagelibrary_image_path . 'logo/nie_logo_600X300.jpg';
+					}
+				?>
+               <div style="width:100%;float:left;overflow:hidden;"><a href="<?php echo BASEURL.$record[3]['url'] ?>" target="_blank"><img src="<?php echo $Image600X300; ?>" style=" width: 100%;float:left;"></a></div>
+                <div style="padding: 11px 7px 16px;float: left;background: #eee;">
+                    <span style="background: #01ABEE; border-radius: 50%;width: 14px;height: 15px;float: left;margin-top: 3px;"></span>
+                    <span style="text-transform: uppercase; padding-left: 6px;font-size: 18px;font-weight: bold;">
+					<?php echo $record[3]['section'];   ?>
+                    </span>
+                    <a href="<?php echo BASEURL.$record[3]['url'] ?>" target="_blank" style="font-size: 26px;margin: 10px 0 10px;text-transform: uppercase;text-decoration:none;color:#000;display:block;"><?php echo $record[3]['title'] ?></a>
+                   <p style="font-size: 15px;margin:0;"><?php echo $record[3]['summary'] ?></p>
+               </div>
+				<?php } ?>
+            </div>
+        </div>
+		<?php if(isset($record[4])){ ?>
+        <div style="background:#eee; float: left;width:100%;">
+            <div style="padding: 11px 7px 16px;">
+                <span style="background: #01ABEE; border-radius: 50%;width: 14px;height: 15px;float: left;margin-top: 3px;"></span>
+                <span style="text-transform: uppercase; padding-left: 6px;font-size: 18px;font-weight: bold;">
+				<?php echo $record[4]['section']; ?>
+				</span>
+                <a href="<?php echo BASEURL.$record[4]['url']; ?>" target="_blank" style="font-size: 30px;margin: 10px 0 10px;text-transform: uppercase;text-decoration: none;display: block;color:#000;"><?php echo $record[4]['title']; ?></a>
+                <p style="font-size: 15px;margin: 4px 0 20px;float:left;"><?php echo $record[4]['summary']; ?></p>
+            </div>
+        </div>
+		<?php } ?>
+        <div style="float:left;width:100%;text-align:center;">
+            <p style="text-transform: uppercase;font-size: 21px; font-weight: bold; margin: 0; padding: 23px 0px; letter-spacing: 7px;">JOIN US & DON'T MISS THE CONVERSATION!</p>
+            <div>
+                     <a href="http://www.newindianexpress.com/" target="_blank" style="background: #01ABEE;text-decoration:none; color: #fff;  padding: 6px 3px; border-radius: 50%;  font-size: 23px; margin-right: 74px;">
+                            <i class="fa fa-mouse-pointer" style="padding-left: 12px;"></i>
+                     </a>
+                     <a href="https://www.facebook.com/thenewindianxpress" target="_blank" style="background: #01ABEE; text-decoration:none; color: #fff;padding: 6px 7px; border-radius: 50%; font-size: 23px;margin-right: 74px;">
+                        <i class="fa fa-facebook" style="padding-left: 7px;"></i>
+                     </a>
+                    <a href="https://twitter.com/NewIndianXpress" target="_blank" style="background: #01ABEE;text-decoration:none;  color: #fff;padding: 6px 2px;border-radius: 50%; font-size: 23px; margin-right: 74px;">
+                            <i class="fa fa-twitter" style="padding-left: 7px;"></i>
+                    </a>
+                    <a href="https://www.instagram.com/newindianexpress/" target="_blank" style="background: #01ABEE;text-decoration:none; color: #fff;padding: 5px 9px;border-radius: 50%;font-size: 25px;">
+                            <i class="fa fa-instagram"></i>
+                    </a>
+            </div>
+        </div>
+    </body>
+</html>
